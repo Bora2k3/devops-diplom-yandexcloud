@@ -45,15 +45,21 @@ terraform init -reconfigure -backend-config "access_key=$YC_STORAGE_ACCESS_KEY" 
 terraform workspace new stage  
 terraform init&& terraform plan&& terraform apply -auto-approve
 terraform output -json > output.json
-```
+```  
+
 ![](pic/S3.jpg)  
+
 ```
 Apply complete! Resources: 18 added, 0 changed, 0 destroyed.
-```
+```  
+
 ![](pic/Infrastructure.jpg)  
+
 6 VM на основе ubuntu-1804-lts и 1 VM (proxy) на основе nat-instance-ubuntu-1804-lts  
 Заносим A записи в CloudFlare DNS  
+
 ![](pic/DNS.jpg)  
+
 Вывод манифестов terraform сохраняем в output.json
 ```
 terraform output -json > output.json
@@ -105,26 +111,35 @@ ansible-playbook playbook.yml -i hosts
 
 Ролью [proxy_server](stack-ansible/roles/proxy_server) разворачиваем на основе `NGINX` `reverse proxy` и получаем `LetsEncrypt` сертификаты  
 Переменные задаются в [/roles/proxy_server/defaults/main.yml](stack-ansible/roles/proxy_server/defaults/main.yml)  
+
 ![](pic/SSL.jpg)  
+
 ___
 ### Установка кластера MySQL
 
 Ролью [mysql](stack-ansible/roles/mysql) поднимаем кластер `MySQL master-slave replication`  
 Переменные задаются в [/roles/mysql/defaults/main.yml](stack-ansible/roles/mysql/defaults/main.yml)  
+
 ![](pic/MySQL.jpg)  
+
 ___
 ### Установка WordPress  
 
 Ролью [wordpress](stack-ansible/roles/wordpress) поднимаем `apache2`, `php-7.2` и `wordpress`, подключаемый к кластеру MySQL  
-Переменные задаются в [/roles/wordpress/defaults/main.yml](stack-ansible/roles/wordpress/defaults/main.yml)
+Переменные задаются в [/roles/wordpress/defaults/main.yml](stack-ansible/roles/wordpress/defaults/main.yml)  
+
 ![](pic/Wordpress.jpg)  
+
 ---
 ### Установка Gitlab CE и Gitlab Runner
 
 Поднимаем ролями [gitlab](stack-ansible/roles/gitlab) (*root/paSSw0rD53124) и [runner](stack-ansible/roles/runner) (*подключается автоматически, runners_registration_token задан в конфигурации).  
 Переменные задаются в [/roles/gitlab/defaults/main.yml](stack-ansible/roles/gitlab/defaults/main.yml) и [/roles/runner/defaults/main.yml](stack-ansible/roles/runner/defaults/main.yml)  
+
 ![](pic/Gitlab.jpg)  
+
 ![](pic/Runner.jpg)  
+
 Создадим .gitlab-ci.yml
 ```
 ---
@@ -148,29 +163,50 @@ deploy-job:
     - ssh -o StrictHostKeyChecking=no podkovka@app.podkovka.ru.net sudo chown www-data /var/www/www.podkovka.ru.net/wordpress/ -R
 ```
 Добавим ssh-key в Settings/CI/CD/Variables  
+
 ![](pic/GitLab_SSH_KEY.jpg)  
-При commit в проект запускается deploy-job и изменения выливаются на сервер
+
+Заменим картинку на главной странице проекта  
+При commit в проект запускается deploy-job и изменения выливаются на сервер  
+
+![](pic/Pipelines.jpg)  
+
 ![](pic/Deploy-job.jpg)  
+
+![](pic/Wordpress_after.jpg)  
+
 ___
 ### Установка Prometheus, Alert Manager, Node Exporter и Grafana
 
 Ролями [prometheus](stack-ansible/roles/prometheus), [alertmanager](stack-ansible/roles/alertmanager), [node_exporter](stack-ansible/roles/alertmanager) и [grafana](stack-ansible/roles/grafana) (*admin/admin) поднимаем стек мониторинга  
 Переменные и конфигурации задаются в [/roles/prometheus/templates/prometheus.yml](stack-ansible/roles/prometheus/templates/prometheus.yml), [/roles/alertmanager/templates/alerts.rules.yml](stack-ansible/roles/alertmanager/templates/alerts.rules.yml)  
+
 ![](pic/Prometheus.jpg)  
+
 ![](pic/Alertmanager.jpg)  
+
 ![](pic/Grafana.jpg)  
+
 Остановим VM runner. Получаем алерт о недоступном инстансе:  
 В Prometheus пока в пендинге:  
+
 ![](pic/Alert1.jpg)  
+
 В Alertmanager через 5 минут:  
+
 ![](pic/Alert2.jpg)  
+
 Дописав конфигурацию Prometheus, можно отправить сообщения, например, на telegram-каналы (с версии 0.24 alertmanager поддерживает telegram "из коробки")  
 Пример из рабочей конфигурации:  
+
 ![](pic/Telegram.jpg)
+
 Добавим на хосты с MySQL DB экспортер через роль [/roles/mysqld_exporter](stack-ansible/roles/mysqld_exporter)  
 И добавим в Grafana MySQL dashboard через роль [/roles/grafana](stack-ansible/roles/grafana), дописав код добавления дашборды.  
-`- name: Add mysqld_exporter dashboard`
+`- name: Add mysqld_exporter dashboard`  
+
 ![](pic/MySQL_dashboard.jpg)  
+
 ---
 ## Что необходимо для сдачи задания?
 
