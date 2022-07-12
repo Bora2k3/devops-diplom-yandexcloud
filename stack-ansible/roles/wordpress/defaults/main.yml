@@ -1,0 +1,16 @@
+---
+# defaults file for wordpress
+#System Settings
+php_modules: [ 'php-curl', 'php-gd', 'php-mbstring', 'php-xml', 'php-xmlrpc', 'php-soap', 'php-intl', 'php-zip' ]
+
+#MySQL Settings
+mysql_root_password: "root"
+mysql_db: "wordpress"
+mysql_user: "wordpress"
+mysql_password: "wordpress"
+mysql_server: "db01"
+
+#HTTP Settings
+http_host: "www.podkovka.ru.net"
+http_conf: "www.podkovka.ru.net.conf"
+http_port: "80"

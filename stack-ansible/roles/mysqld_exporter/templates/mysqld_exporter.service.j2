@@ -1,0 +1,19 @@
+[Unit]
+Description=Prometheus Mysqld Exporter
+After=network-online.target
+StartLimitInterval=0
+
+[Service]
+Type=simple
+User=mysqld-exp
+Group=mysqld-exp
+Environment="DATA_SOURCE_NAME={{ mysqld_exporter_dsn }}"
+ExecStart=/usr/local/bin/mysqld_exporter \
+    --web.listen-address {{ mysqld_exporter_web_listen_address }} \
+
+SyslogIdentifier=mysqld_exporter
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

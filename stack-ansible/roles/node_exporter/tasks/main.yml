@@ -1,0 +1,45 @@
+---
+# tasks file for node_exporter
+- name: Create User nodeexporter
+  user:
+    name: nodeexporter
+    create_home: no
+    shell: /bin/false
+
+- name: Create directories for node-exporter
+  file:
+    path: '/tmp/node_exporter'
+    state: directory
+    owner: nodeexporter
+    group: nodeexporter
+
+- name: Download And Unzipped node-exporter
+  retries: 5
+  delay: 2
+  unarchive:
+    src: https://github.com/prometheus/node_exporter/releases/download/v{{ node_exporter_version }}/node_exporter-{{ node_exporter_version }}.linux-amd64.tar.gz
+    dest: /tmp/node_exporter
+    creates: /tmp/node_exporter/node_exporter-{{ node_exporter_version }}.linux-amd64
+    remote_src: yes
+
+- name: Copy Bin Files From Unzipped to node-exporter
+  copy:
+    src: /tmp/node_exporter/node_exporter-{{ node_exporter_version }}.linux-amd64/node_exporter
+    dest: /usr/local/bin/
+    remote_src: yes
+    mode: preserve
+    owner: nodeexporter
+    group: nodeexporter
+
+- name: Create File for node-exporter Systemd
+  template:
+    src=templates/node_exporter.service
+    dest=/etc/systemd/system/
+  notify:
+    - systemd reload
+
+- name: Systemctl node-exporter Start
+  systemd:
+    name: node_exporter
+    state: started
+    enabled: yes

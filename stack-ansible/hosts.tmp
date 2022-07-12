@@ -1,0 +1,40 @@
+[proxy_server]
+podkovka.ru.net
+[proxy_server:vars]
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null'
+
+[mysql_db01]
+db01.podkovka.ru.net mysql_server_id=1 mysql_replication_role=master
+[mysql_db01:vars]
+ansible_host=$vm_db01_private
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q podkovka@podkovka.ru.net -o StrictHostKeyChecking=no"'
+
+[mysql_db02]
+db02.podkovka.ru.net mysql_server_id=2 mysql_replication_role=slave
+[mysql_db02:vars]
+ansible_host=$vm_db02_private
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q podkovka@podkovka.ru.net -o StrictHostKeyChecking=no"'
+
+[wordpress]
+app.podkovka.ru.net
+[wordpress:vars]
+ansible_host=$vm_app_private
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q podkovka@podkovka.ru.net -o StrictHostKeyChecking=no"'
+
+[gitlab]
+gitlab.podkovka.ru.net
+[gitlab:vars]
+ansible_host=$vm_gitlab_private
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q podkovka@podkovka.ru.net -o StrictHostKeyChecking=no"'
+
+[runner]
+runner.podkovka.ru.net
+[runner:vars]
+ansible_host=$vm_runner_private
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q podkovka@podkovka.ru.net -o StrictHostKeyChecking=no"'
+
+[monitoring]
+monitoring.podkovka.ru.net
+[monitoring:vars]
+ansible_host=$vm_monitoring_private
+ansible_ssh_common_args='-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ProxyCommand="ssh -W %h:%p -q podkovka@podkovka.ru.net -o StrictHostKeyChecking=no"'

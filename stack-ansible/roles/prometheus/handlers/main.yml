@@ -1,0 +1,7 @@
+---
+# handlers file for prometheus
+- name: firewalld systemd restart
+  command: firewall-cmd --reload
+
+- name: systemd reload
+  systemd: daemon_reload=yes

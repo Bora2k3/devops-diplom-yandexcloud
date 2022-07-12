@@ -1,0 +1,44 @@
+---
+# defaults file for proxy_server
+nginx_revproxy_sites:
+  www.podkovka.ru.net:
+    domains:
+      - www.podkovka.ru.net
+      - podkovka.ru.net
+    upstreams:
+      - { backend_address: "{{ lookup ('env', 'vm_app_private') }}", backend_port: 80 }   #app_to_www
+    ssl: true
+    letsencrypt: true
+    letsencrypt_email: "devops@podkovka.ru.net"
+  grafana.podkovka.ru.net:
+    domains:
+      - grafana.podkovka.ru.net
+    upstreams:
+      - { backend_address: "{{ lookup ('env', 'vm_monitoring_private') }}", backend_port: 3000 }  #monitoring_grafana
+    ssl: true
+    letsencrypt: true
+    letsencrypt_email: "devops@podkovka.ru.net"
+  prometheus.podkovka.ru.net:
+    domains:
+      - prometheus.podkovka.ru.net
+    upstreams:
+      - { backend_address: "{{ lookup ('env', 'vm_monitoring_private') }}", backend_port: 9090 }  #monitoring_prometheus
+    ssl: true
+    letsencrypt: true
+    letsencrypt_email: "devops@podkovka.ru.net"
+  alertmanager.podkovka.ru.net:
+    domains:
+      - alertmanager.podkovka.ru.net
+    upstreams:
+      - { backend_address: "{{ lookup ('env', 'vm_monitoring_private') }}", backend_port: 9093 }  #monitoring_alertmanager
+    ssl: true
+    letsencrypt: true
+    letsencrypt_email: "devops@podkovka.ru.net"
+  gitlab.podkovka.ru.net:
+    domains:
+      - gitlab.podkovka.ru.net
+    upstreams:
+      - { backend_address: "{{ lookup ('env', 'vm_gitlab_private') }}", backend_port: 80 }   #gitlab_to_gitlab
+    ssl: true
+    letsencrypt: true
+    letsencrypt_email: "devops@podkovka.ru.net"

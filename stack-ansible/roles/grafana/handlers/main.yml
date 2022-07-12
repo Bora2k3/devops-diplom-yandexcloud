@@ -1,0 +1,12 @@
+---
+# handlers file for grafana
+- name: firewalld systemd restart
+  command: firewall-cmd --reload
+
+- name: systemd reload
+  systemd: daemon_reload=yes
+
+- name: restart grafana
+  service:
+    name: grafana
+    state: restarted

@@ -1,0 +1,68 @@
+---
+# tasks file for grafana
+- name: Create User Grafana
+  user:
+    name: grafana
+    create_home: no
+    shell: /bin/false
+
+- name: Create directories for Grafana
+  file:
+    path: '/tmp/grafana'
+    state: directory
+    owner: grafana
+    group: grafana
+
+- name: Download Grafana deb
+  get_url:
+    url: 'https://dl.grafana.com/oss/release/grafana_{{ grafana_version }}_amd64.deb'
+    dest: '/tmp/grafana'
+
+- name: Install Grafana
+  apt:
+    deb: '/tmp/grafana/grafana_{{ grafana_version }}_amd64.deb'
+
+- name: Dashboard setup config
+  template:
+    src: templates/provisioning/dashboards/dashboard.yml
+    dest: /etc/grafana/provisioning/dashboards/dashboard.yml
+
+- name: Datasources setup config
+  template:
+    src: templates/provisioning/datasources/datasource.yml
+    dest: /etc/grafana/provisioning/datasources/datasource.yml
+
+- name: Add dashboards dir
+  file:
+    path: /var/lib/grafana/dashboards
+    recurse: yes
+    state: directory
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+
+- name: Systemctl Grafana Start
+  systemd:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Add node_exporter dashboard
+  retries: 5
+  delay: 2
+  community.grafana.grafana_dashboard:
+    grafana_url: http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:3000
+    grafana_user: "admin"
+    grafana_password: "admin"
+    dashboard_id: 1860
+    dashboard_revision: 27
+  ignore_errors: true
+
+- name: Add mysqld_exporter dashboard
+  community.grafana.grafana_dashboard:
+    grafana_url: http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:3000
+    grafana_user: "admin"
+    grafana_password: "admin"
+    dashboard_id: 14057
+    dashboard_revision: 1
+  ignore_errors: true

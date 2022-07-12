@@ -1,0 +1,121 @@
+---
+# tasks file for proxy_server
+- name: Update apt cache
+  apt: update_cache=yes cache_valid_time=3600
+
+- name: Install Nginx and ssl-cert
+  apt:
+    name:
+      - nginx
+      - ssl-cert
+    state: present
+  register:
+    nginxinstalled
+  delay: 10
+  retries: 12
+  until: nginxinstalled is successful
+
+- name: Install python-passlib for Python 3
+  apt:
+    name:
+      - "python3-passlib"
+    state: present
+  register:
+    result
+  delay: 10
+  retries: 12
+  until: result is successful
+  when:
+    - ansible_python['version']['major'] == 3
+
+- name: Set up nginx directories
+  file:
+    path: "/etc/nginx/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: 0640
+  with_items:
+    - sites-available
+    - sites-enabled
+
+- name: Add Site Config
+  template:
+    src: reverseproxy.conf.j2
+    dest: /etc/nginx/sites-available/{{ item.key }}.conf
+    owner: root
+    group: root
+    mode: 0640
+  with_dict: "{{ nginx_revproxy_sites }}"
+  register:
+    siteconfig
+  when:
+    - nginxinstalled is success
+    - not item.value.ssl | default(True)
+    - not item.value.letsencrypt | default(True)
+
+- name: Add Https Site Config
+  template:
+    src: reverseproxy_ssl.conf.j2
+    dest: /etc/nginx/sites-available/{{ item.key }}.conf
+    owner: root
+    group: root
+    mode: 0640
+  with_dict: "{{ nginx_revproxy_sites }}"
+  register:
+    siteconfig
+  when:
+    - nginxinstalled is success
+    - item.value.ssl | default(False)
+    - not item.value.letsencrypt | default(True)
+
+- name: Get Active Sites
+  command: ls -1 /etc/nginx/sites-enabled/
+  changed_when: "active.stdout_lines != nginx_revproxy_sites.keys()|sort()"
+  check_mode: false
+  register: active
+
+- name: Enable Site Config
+  file:
+    src: /etc/nginx/sites-available/{{ item.key }}.conf
+    dest: /etc/nginx/sites-enabled/{{ item.key }}
+    state: link
+  with_dict: "{{ nginx_revproxy_sites }}"
+  notify: Reload Nginx
+  when:
+    - siteconfig is success
+    - not item.value.letsencrypt | default(True)
+    - not ansible_check_mode
+
+- name: Create WebRoot sites
+  file:
+    dest: /var/www/{{ item.key }}/.well-known
+    mode: 0775
+    state: directory
+    owner: www-data
+    group: www-data
+  with_dict: "{{ nginx_revproxy_sites }}"
+  notify: Reload Nginx
+  when:
+    - nginxinstalled is success
+
+- name: WebRoot Permissions Sites
+  file:
+    dest: /var/www/{{ item.key }}
+    mode: 0775
+    state: directory
+    owner: www-data
+    group: www-data
+    recurse: true
+  with_dict: "{{ nginx_revproxy_sites }}"
+  notify: Reload Nginx
+  when:
+    - nginxinstalled is success
+
+- name: Get WebRoot Sites
+  command: ls -1 /var/www/
+  changed_when: "webroot.stdout_lines != nginx_revproxy_sites.keys()|sort()"
+  check_mode: false
+  register: webroot
+
+- include_tasks: letsencrypt.yml
